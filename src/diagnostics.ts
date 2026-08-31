@@ -10,7 +10,7 @@ const patterns: Array<[GradleErrorType, RegExp]> = [
   ['DEPENDENCY', /(Could not resolve .*|Could not find .*|Failed to resolve|dependency.*failed)/i],
   ['COMPILATION', /(Compilation failed|Kotlin compiler|compile.*failed|e: .*\.kt:)/i],
   ['GRADLE_VERSION', /(unsupported Gradle version|minimum supported Gradle version|requires Gradle|Could not determine the dependencies of task)/i],
-  ['TEST_FAILURE', /(There were failing tests|tests failed|FAILED)/i],
+  ['TEST_FAILURE', /(There were failing tests|tests failed|UnitTest FAILED|AndroidTest FAILED)/i],
 ]
 
 export function classifyGradleError(stdout: string, stderr: string, timedOut = false): { type: GradleErrorType; message: string } {
