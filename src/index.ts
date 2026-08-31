@@ -8,7 +8,7 @@ import { buildTasks, normalizeInstrumentationFilter, normalizeJvmFilter, normali
 import { compareSummary, loadPrevious, saveHistory, type HistoryEntry } from './history.js'
 import { collectReportFiles, emptySummary, parseReports, type ReportParseResult, type TestFailure } from './results.js'
 
-export const name = 'dsh-robolectric-runner'
+export const name = 'dsh-android-runner'
 export const inject = ['tools']
 
 const DEFAULT_TIMEOUT_MS = 300_000
@@ -86,13 +86,22 @@ function uniqueFilters(failures: TestFailure[], maxFilters: number): string[] {
   }
   return result
 }
+function uniqueInstrumentationFilters(failures: TestFailure[], maxFilters: number): string[] {
+  const result: string[] = []
+  for (const failure of failures) {
+    const filter = `${failure.testClass}#${failure.testName}`
+    if (!result.includes(filter)) result.push(filter)
+    if (result.length >= maxFilters) break
+  }
+  return result
+}
 function normalizeTestType(value: string | undefined): 'jvm' | 'instrumentation' {
   const raw = (value ?? 'jvm').trim().toLowerCase()
   // AUTO remains deliberately conservative: this release never guesses that a
   // device/emulator test is safe to launch from a model call.
   if (raw === 'jvm' || raw === 'robolectric' || raw === 'auto') return 'jvm'
   if (raw === 'instrumentation' || raw === 'device') return 'instrumentation'
-  throw new Error('testType must be one of: auto, jvm, robolectric, instrumentation.')
+  throw new Error('testType must be one of: auto, jvm, robolectric, instrumentation, device.')
 }
 function emptyCoverage(): CoverageSummary { return { available: false, linePercent: -1, branchPercent: -1, instructionPercent: -1, methodPercent: -1, classPercent: -1, reportFiles: 0 } }
 function emptyComparison(): Comparison { return { previousAvailable: false, failedDelta: 0, durationDeltaMs: 0 } }
@@ -106,7 +115,7 @@ export function apply(ctx: Context) {
       module: { type: 'string', description: 'Backward-compatible single Gradle module path, for example app or :feature:login.' },
       modules: { type: 'array', description: 'Optional Gradle module paths for multi-module execution, for example ["app", ":feature:login"]. Use this instead of module when running multiple modules.', items: { type: 'string' } },
       variant: { type: 'string', description: 'Android build variant, for example Debug, Release, or BenchmarkDebug. Defaults to Debug.' },
-      testType: { type: 'string', description: 'Test strategy: auto, jvm, robolectric, or instrumentation. auto/jvm/robolectric use local JVM tests; instrumentation uses connected Android device tests.' },
+      testType: { type: 'string', description: 'Test strategy: auto, jvm, robolectric, instrumentation, or device. auto/jvm/robolectric use local JVM tests; instrumentation/device uses connected Android device tests.' },
       testFilter: { type: 'string', description: 'JVM: Gradle --tests selector. Instrumentation: Android runner selector such as com.example.LoginTest or com.example.LoginTest#login.' },
       rerunFailed: { type: 'boolean', description: 'Rerun failed/error cases found in the previous XML reports. Cannot be combined with testFilter.' },
       timeoutMs: { type: 'number', description: `Maximum Gradle execution time. Default ${DEFAULT_TIMEOUT_MS}; allowed 1000-${MAX_TIMEOUT_MS}.` },
@@ -181,7 +190,7 @@ export function apply(ctx: Context) {
         }
         const failures = previousSummaries.flatMap((s) => s.failuresList)
         selectedFilters = testType === 'instrumentation'
-          ? uniqueFilters(failures, limits.maxFilters).map((f) => f.replace(/\.([^.]+)$/, '#$1'))
+          ? uniqueInstrumentationFilters(failures, limits.maxFilters)
           : uniqueFilters(failures, limits.maxFilters)
         if (testType === 'instrumentation' && selectedFilters.length > 1) {
           throw new Error('Instrumentation rerunFailed found multiple failing test cases. The Android runner accepts one class/method selector per invocation; run a specific testFilter for the desired case.');

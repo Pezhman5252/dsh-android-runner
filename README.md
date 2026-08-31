@@ -1,6 +1,6 @@
-# dsh-robolectric-runner
+# dsh-android-runner
 
-A DeepSeek Harness bundle that registers `run_robolectric`, a safety-focused Android test execution and diagnostics tool. Despite the historical name, the tool now supports Android local JVM/Robolectric tests and connected instrumentation tests while preserving the original DSH tool contract.
+A DeepSeek Harness bundle that registers `run_robolectric`, a safety-focused Android test execution and diagnostics tool. It supports Android local JVM/Robolectric tests and connected instrumentation tests while preserving the original DSH tool contract.
 
 ## Why this design
 
@@ -12,7 +12,7 @@ The current DSH documentation defines `defineTool()` + `ctx.tools.register()` as
 
 ```powershell
 # Use the same DSH release family as the plugin compatibility baseline.
-pnpm dlx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add dsh-robolectric-runner@1.4.2
+pnpm dlx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add dsh-android-runner@1.4.2
 
 pnpm dlx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
 pnpm dlx @deepseek-ai/dsh@0.1.1-rc.2 web --no-open
@@ -66,10 +66,11 @@ Both forms are normalized to Gradle project paths.
 {"testType":"jvm"}
 {"testType":"robolectric"}
 {"testType":"instrumentation"}
+{"testType":"device"}
 {"testType":"auto"}
 ```
 
-`auto` currently selects the safe JVM strategy. Explicit `instrumentation` is required when a device/emulator test is intended; this avoids unexpectedly launching an emulator/device test from an agent call.
+`device` is an alias for `instrumentation`. `auto` currently selects the safe JVM strategy. Explicit `instrumentation`/`device` is required when a device/emulator test is intended; this avoids unexpectedly launching an emulator/device test from an agent call.
 
 ### JVM test filter
 
@@ -205,7 +206,7 @@ The verification suite checks the bundle manifest, XML parser, output schema, an
 
 ## Compatibility
 
-The plugin preserves the existing public tool name `run_robolectric`, the Cordis bundle id/name, the DSH workspace source, and the `defineTool()` / `ctx.tools.register()` integration model. `@deepseek-ai/dsh-tools` is intentionally a peer dependency, not a bundled runtime dependency, so the plugin reuses the Harness-owned ToolRuntime instance and avoids duplicate `dsh-tools` copies that can break the internal scheduler symbol identity. The supported peer range is `>=0.1.1-rc.2 <0.2.0`; the current tested baseline is DSH `0.1.1-rc.2` with the matching host `dsh-tools` copy. Existing calls using `module`, `variant`, `testFilter`, `rerunFailed`, and `timeoutMs` remain supported.
+The plugin keeps the existing public tool name `run_robolectric`, the DSH workspace source, and the `defineTool()` / `ctx.tools.register()` integration model. `@deepseek-ai/dsh-tools` is intentionally a peer dependency, not a bundled runtime dependency, so the plugin reuses the Harness-owned ToolRuntime instance and avoids duplicate `dsh-tools` copies that can break the internal scheduler symbol identity. The supported peer range is `>=0.1.1-rc.2 <0.2.0`; the current tested baseline is DSH `0.1.1-rc.2` with the matching host `dsh-tools` copy. Existing calls using `module`, `variant`, `testFilter`, `rerunFailed`, and `timeoutMs` remain supported.
 
 ## License
 

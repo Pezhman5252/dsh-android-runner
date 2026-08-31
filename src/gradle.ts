@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join } from 'node:path'
 import { spawn } from 'node:child_process'
 
 export interface ProcessResult {
@@ -58,10 +58,8 @@ export async function runGradle(
   const command = useSystemGradle ? (windows ? 'gradle.bat' : 'gradle') : wrapper
   const startedAt = Date.now()
   const child = windows
-    ? spawn(useSystemGradle ? (process.env.ComSpec || 'cmd.exe') : (process.env.ComSpec || 'cmd.exe'),
-        useSystemGradle
-          ? ['/d', '/s', '/c', 'gradle.bat', ...gradleArgs]
-          : ['/d', '/s', '/c', 'gradlew.bat', ...gradleArgs],
+    ? spawn(process.env.ComSpec || 'cmd.exe',
+        ['/d', '/s', '/c', command, ...gradleArgs],
         { cwd: projectRoot, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], detached: false })
     : spawn(command, gradleArgs, { cwd: projectRoot, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], detached: true })
 
@@ -222,10 +220,6 @@ export function wrapperExists(projectRoot: string): boolean {
   return process.platform === 'win32' ? existsSync(join(projectRoot, 'gradlew.bat')) : existsSync(join(projectRoot, 'gradlew'))
 }
 
-export function systemGradleAvailable(): boolean {
-  return Boolean(process.env.PATH)
-}
-
 export function validateGradleProperties(properties: Record<string, unknown> | undefined): string[] {
   if (!properties) return []
   const entries = Object.entries(properties)
@@ -235,12 +229,4 @@ export function validateGradleProperties(properties: Record<string, unknown> | u
     if (typeof value !== 'string' || !GRADLE_VALUE_RE.test(value)) throw new Error(`Gradle property value must be a non-empty string without newlines (max 2000 chars) for: ${key}`)
     return `-P${key}=${value}`
   })
-}
-
-export function reportRoots(projectRoot: string, modules: string[]): string[] {
-  return modules.map((modulePath) => join(gradleProjectPathToDirectory(projectRoot, modulePath), 'build'))
-}
-
-export function relativeModuleDirectory(projectRoot: string, modulePath: string): string {
-  return relative(projectRoot, gradleProjectPathToDirectory(projectRoot, modulePath))
 }

@@ -1,3 +1,3 @@
 - insert:
-    - id: dsh-robolectric-runner
-      name: dsh-robolectric-runner
+    - id: dsh-android-runner
+      name: dsh-android-runner

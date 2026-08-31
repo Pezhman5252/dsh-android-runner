@@ -12,11 +12,20 @@ function walk(dir: string, files: string[], depth: number): void {
     else if (e.isFile() && /jacoco.*\.xml$/i.test(e.name)) files.push(p)
   }
 }
-function counter(xml: string, type: string): number | null {
-  const m = new RegExp(`<counter\\b[^>]*type=["']${type}["'][^>]*covered=["'](\\d+)["'][^>]*missed=["'](\\d+)["'][^>]*/?>`, 'i').exec(xml)
-  if (!m) return null
-  const covered = Number(m[1]), missed = Number(m[2]), total = covered + missed
-  return total > 0 ? (covered / total) * 100 : 100
+function attr(tag: string, name: string): string {
+  const match = new RegExp(`\\b${name}\\s*=\\s*["']([^"']*)["']`, 'i').exec(tag)
+  return match ? match[1] ?? '' : ''
+}
+function counter(xml: string, type: string): { covered: number; missed: number } | null {
+  const re = new RegExp(`<counter\\b[^>]*type=["']${type}["'][^>]*/?>`, 'gi')
+  let last: string | null = null
+  let m: RegExpExecArray | null
+  while ((m = re.exec(xml)) !== null) last = m[0]
+  if (!last) return null
+  const covered = attr(last, 'covered')
+  const missed = attr(last, 'missed')
+  if (covered === '' || missed === '') return null
+  return { covered: Number(covered), missed: Number(missed) }
 }
 export function collectCoverage(projectRoot: string, modules: string[]): CoverageSummary {
   const files: string[] = []
@@ -31,10 +40,10 @@ export function collectCoverage(projectRoot: string, modules: string[]): Coverag
     try {
       const xml = readFileSync(file, 'utf8')
       for (const type of ['LINE', 'BRANCH', 'INSTRUCTION', 'METHOD', 'CLASS']) {
-        const re = new RegExp(`<counter\\b[^>]*type=["']${type}["'][^>]*covered=["'](\\d+)["'][^>]*missed=["'](\\d+)["'][^>]*/?>`, 'i').exec(xml)
-        if (re) {
+        const value = counter(xml, type)
+        if (value) {
           const current = sums.get(type) ?? { covered: 0, missed: 0 }
-          current.covered += Number(re[1]); current.missed += Number(re[2]); sums.set(type, current)
+          current.covered += value.covered; current.missed += value.missed; sums.set(type, current)
         }
       }
     } catch {}
