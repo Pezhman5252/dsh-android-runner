@@ -5,7 +5,7 @@ import { validateJsonSchemaValue } from '@deepseek-ai/dsh-tools'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const { apply } = await import(pathToFile(path.join(root, 'lib', 'index.js')))
 let captured
-const ctx = { logger: () => ({ info() {}, warn() {}, error() {} }), tools: { register(def) { captured = def } } }
+const ctx = { logger: () => ({ info() {}, warn() {}, error() {} }), tools: { register(def) { captured = def } }, effect(cb) { return cb() } }
 apply(ctx)
 assert.ok(captured); assert.equal(captured.name, 'run_robolectric')
 const check = (value) => { const violations = validateJsonSchemaValue(captured.output.schema, value, 'value'); assert.deepEqual(violations, [], violations.join('; ')) }

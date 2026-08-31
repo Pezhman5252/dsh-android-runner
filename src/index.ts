@@ -108,7 +108,7 @@ function emptyComparison(): Comparison { return { previousAvailable: false, fail
 
 export function apply(ctx: Context) {
   const logger = ctx.logger(name)
-  ctx.tools.register(defineTool({
+  ctx.effect(() => ctx.tools.register(defineTool({
     name: 'run_robolectric',
     description: 'Safely run Android local JVM/Robolectric tests or Android instrumentation tests from the active DSH workspace. Supports multi-module execution, failure reruns, Gradle diagnostics, bounded output, optional coverage parsing, and test history. It never accepts an arbitrary shell command.',
     parameters: {
@@ -263,7 +263,7 @@ export function apply(ctx: Context) {
         gradleErrorType: diagnostic.type, gradleErrorMessage: diagnostic.message, reportPaths, coverage, comparison, rawOutputTail,
       }
     },
-  }))
+  })))
 }
 
 function formatPct(value: number): string { return value < 0 ? 'n/a' : `${value.toFixed(1)}%` }

@@ -13,6 +13,7 @@ let captured
 const ctx = {
   logger: () => ({ info() {}, warn() {}, error() {} }),
   tools: { register(definition) { captured = definition } },
+  effect(cb) { return cb() },
 }
 
 apply(ctx)

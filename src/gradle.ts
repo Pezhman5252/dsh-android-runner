@@ -141,7 +141,7 @@ function includedModules(projectRoot: string): string[] {
   let text = ''
   try { text = readFileSync(settings, 'utf8') } catch { return [] }
   const result: string[] = []
-  const regex = /include\s*(?:\(([^)]*)\)|([^\n]+))/g
+  const regex = /\binclude\b(?!Build)\s*(?:\(([^)]*)\)|([^\n]+))/g
   let match: RegExpExecArray | null
   while ((match = regex.exec(text)) !== null) {
     const body = match[1] ?? match[2] ?? ''

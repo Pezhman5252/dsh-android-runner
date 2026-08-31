@@ -21,7 +21,7 @@ export function saveHistory(projectRoot: string, entry: HistoryEntry): void {
   const tmp = join(dir, `.${safe}.tmp`)
   const target = join(dir, `${safe}.json`)
   writeFileSync(tmp, JSON.stringify(entry, null, 2), 'utf8')
-  try { renameSync(tmp, target) } catch { try { unlinkSync(target) } catch {}; renameSync(tmp, target) }
+  try { renameSync(tmp, target) } catch { try { unlinkSync(target) } catch {}; try { renameSync(tmp, target) } catch {} }
   try {
     const files = readdirSync(dir).filter((x: string) => x.endsWith('.json')).sort()
     for (const old of files.slice(0, Math.max(0, files.length - MAX_HISTORY))) unlinkSync(join(dir, old))
