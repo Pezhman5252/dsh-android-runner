@@ -4,7 +4,7 @@ import { statSync } from 'node:fs'
 import { relative } from 'node:path'
 import { classifyGradleError } from './diagnostics.js'
 import { collectCoverage, type CoverageSummary } from './coverage.js'
-import { buildTasks, normalizeInstrumentationFilter, normalizeJvmFilter, normalizeModules, normalizeVariant, runGradle, validateGradleProperties, wrapperExists } from './gradle.js'
+import { buildTasks, normalizeInstrumentationFilter, normalizeJvmFilter, normalizeModules, normalizeVariant, runGradle, validateGradleProperties, validateRerunFilter, wrapperExists } from './gradle.js'
 import { compareSummary, loadPrevious, saveHistory, type HistoryEntry } from './history.js'
 import { collectReportFiles, emptySummary, parseReports, type ReportParseResult, type TestFailure } from './results.js'
 
@@ -192,6 +192,11 @@ export function apply(ctx: Context) {
         selectedFilters = testType === 'instrumentation'
           ? uniqueInstrumentationFilters(failures, limits.maxFilters)
           : uniqueFilters(failures, limits.maxFilters)
+        // Rerun filters derive from XML report attribute values (test class/method
+        // names), which on Windows flow through `cmd /d /s /c` exactly like an
+        // explicit testFilter does. They must pass the same shell-metacharacter
+        // gate so a crafted report cannot smuggle a cmd injection past the tool.
+        selectedFilters = selectedFilters.map((filter) => validateRerunFilter(filter))
         if (testType === 'instrumentation' && selectedFilters.length > 1) {
           throw new Error('Instrumentation rerunFailed found multiple failing test cases. The Android runner accepts one class/method selector per invocation; run a specific testFilter for the desired case.');
         }
