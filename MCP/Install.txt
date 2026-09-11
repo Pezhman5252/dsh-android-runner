@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "dsh-android-runner-mcp": {
+      "command": "python",
+      "args": [
+        "C:/Users/Pezhman/AppData/Local/hermes/mcp/dsh-android-runner/server.py"
+      ],
+      "enabled": true
+    }
+  }
+}
